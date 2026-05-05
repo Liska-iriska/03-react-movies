@@ -2,52 +2,42 @@ import { useState } from "react";
 // import css from "./App.module.css";
 import SearchBar from "../SearchBar/SearchBar";
 import MovieGrid from "../MovieGrid/MovieGrid";
+import { movieService } from "../../services/movieService";
+import Loader from "../Loader/Loader";
 import toast, { Toaster } from "react-hot-toast";
 import type { Movie } from "../../types/movie";
-import axios from "axios";
 
 export default function App() {
   const [movie, setMovies] = useState<Movie[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSearch = async (searchTerm: string) => {
     setMovies([]);
+    setIsLoading(true);
+
     try {
-      interface HTTPResponse {
-        results: Movie[];
-      }
-
-      const response = await axios.get<HTTPResponse>(
-        `https://api.themoviedb.org/3/search/movie`,
-        {
-          params: {
-            query: searchTerm,
-          },
-          headers: {
-            Authorization: `Bearer ${import.meta.env.VITE_TMDB_TOKEN}`,
-          },
-        },
-      );
-
-      if (response.data.results.length === 0) {
-        setMovies([]);
+      const data = await movieService(searchTerm);
+      if (data.length === 0) {
         toast.error("No movies found for your request.");
-
         return;
       }
-      setMovies(response.data.results);
+      setMovies(data);
     } catch {
       setMovies([]);
       toast.error("Whoops, something went wrong!");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <>
+    <div className="app">
       <Toaster />
       <SearchBar onSubmit={handleSearch} />
+      {isLoading && <Loader />}
       {movie.length > 0 && (
         <MovieGrid movies={movie} onSelect={(id) => console.log(id)} />
       )}
-    </>
+    </div>
   );
 }
