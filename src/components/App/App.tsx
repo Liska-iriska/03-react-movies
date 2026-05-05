@@ -1,20 +1,17 @@
 import { useState } from "react";
-import css from "./App.module.css";
+// import css from "./App.module.css";
 import SearchBar from "../SearchBar/SearchBar";
-import { Toaster } from "react-hot-toast";
+import MovieGrid from "../MovieGrid/MovieGrid";
+import toast, { Toaster } from "react-hot-toast";
 import type { Movie } from "../../types/movie";
 import axios from "axios";
 
 export default function App() {
   const [movie, setMovies] = useState<Movie[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isError, setIsError] = useState(false);
 
   const handleSearch = async (searchTerm: string) => {
+    setMovies([]);
     try {
-      setIsLoading(true);
-      setIsError(false);
-
       interface HTTPResponse {
         results: Movie[];
       }
@@ -30,12 +27,17 @@ export default function App() {
           },
         },
       );
-      setIsLoading(false);
+
+      if (response.data.results.length === 0) {
+        setMovies([]);
+        toast.error("No movies found for your request.");
+
+        return;
+      }
       setMovies(response.data.results);
     } catch {
-      setIsError(true);
-    } finally {
-      setIsLoading(false);
+      setMovies([]);
+      toast.error("Whoops, something went wrong!");
     }
   };
 
@@ -43,32 +45,9 @@ export default function App() {
     <>
       <Toaster />
       <SearchBar onSubmit={handleSearch} />
-      {isLoading && <p>Loading data, please wait...</p>}
-      {isError && <p>Whoops, something went wrong! Please try again!</p>}
       {movie.length > 0 && (
-        <ul>
-          {movie.map(({ title, poster_path, id }) => (
-            <li key={id}>
-              <a
-                href={`https://image.tmdb.org/t/p/w500${poster_path}`}
-                target="_blank"
-              >
-                {title}
-              </a>
-            </li>
-          ))}
-        </ul>
+        <MovieGrid movies={movie} onSelect={(id) => console.log(id)} />
       )}
     </>
   );
 }
-//   const handleSearch = (searchTerm: string) => {
-//     console.log("Шукаємо:", searchTerm);
-//   };
-//   return (
-//     <>
-//       <Toaster />
-//       <SearchBar onSubmit={handleSearch} />
-//     </>
-//   );
-// }
