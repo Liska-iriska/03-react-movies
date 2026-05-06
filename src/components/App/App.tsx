@@ -2,6 +2,7 @@ import { useState } from "react";
 // import css from "./App.module.css";
 import SearchBar from "../SearchBar/SearchBar";
 import MovieGrid from "../MovieGrid/MovieGrid";
+import MovieModal from "../MovieModal/MovieModal";
 import ErrorMessage from "../ErrorMessage/ErrorMessage";
 import { movieService } from "../../services/movieService";
 import Loader from "../Loader/Loader";
@@ -12,6 +13,10 @@ export default function App() {
   const [movie, setMovies] = useState<Movie[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isError, setIsError] = useState(false);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
+
+  const openModal = (movieObj: Movie) => setSelectedMovie(movieObj);
+  const closeModal = () => setSelectedMovie(null);
 
   const handleSearch = async (searchTerm: string) => {
     setMovies([]);
@@ -40,8 +45,9 @@ export default function App() {
       <SearchBar onSubmit={handleSearch} />
       {isError && <ErrorMessage />}
       {isLoading && <Loader />}
-      {movie.length > 0 && (
-        <MovieGrid movies={movie} onSelect={(id) => console.log(id)} />
+      {movie.length > 0 && <MovieGrid movies={movie} onSelect={openModal} />}
+      {selectedMovie && (
+        <MovieModal movie={selectedMovie} onClose={closeModal} />
       )}
     </div>
   );
